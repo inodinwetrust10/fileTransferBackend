@@ -11,10 +11,16 @@ import (
 	"time"
 
 	"github.com/inodinwetrust10/filetransfer/internals"
+	"github.com/inodinwetrust10/filetransfer/internals/database"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	internals.InitRoutes()
+	godotenv.Load()
+	db := database.ConnectDB()
+	defer db.Close(context.Background())
+	internals.InitRoutes(db)
+
 	server := &http.Server{
 		Handler: internals.Router,
 		Addr:    "localhost:8080",
@@ -22,12 +28,19 @@ func main() {
 
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 	go func() {
+		log.Println("Server started")
 		err := server.ListenAndServe()
-		if err != nil {
-			log.Fatal("error starting the server")
+		if err != nil && err != http.ErrServerClosed {
+			log.Fatal("error starting the server:", err)
+		}
+		if err == http.ErrServerClosed {
+			log.Println("Server stopped accepting new connections")
 		}
 	}()
+	///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 	<-done
 

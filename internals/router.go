@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/jackc/pgx/v5"
 )
 
 var (
@@ -14,6 +15,6 @@ var (
 	}
 )
 
-func InitRoutes() {
+func InitRoutes(conn *pgx.Conn) {
 	Router.HandleFunc("/ws", HandleConn)
 }
